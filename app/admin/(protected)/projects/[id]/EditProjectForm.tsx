@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import TechnologiesManager from "../[id]/technologies/TechnologiesManager";
+import TechnologiesManager from "./technologies/TechnologiesManager";
 
 type Translation = {
   id: number;
