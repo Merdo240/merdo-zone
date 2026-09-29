@@ -32,6 +32,12 @@ type TelegramUpdate = {
 
 export async function POST(request: Request) {
   try {
+    /*
+    =========================================================
+    WEBHOOK SECURITY
+    =========================================================
+    */
+
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
     const receivedSecret = request.headers.get(
@@ -40,7 +46,10 @@ export async function POST(request: Request) {
 
     if (!secret || receivedSecret !== secret) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        {
+          success: false,
+          message: "Unauthorized",
+        },
         { status: 401 }
       );
     }
@@ -56,7 +65,7 @@ export async function POST(request: Request) {
 
     /*
     =========================================================
-    TELEGRAM HELPERS
+    TELEGRAM HELPER
     =========================================================
     */
 
@@ -147,7 +156,7 @@ Explore my work, get in touch, or view my resume using the buttons below.
                   ],
                   [
                     {
-                      text: "📄 تحميل السيرة الذاتية",
+                      text: "📄 السير الذاتية",
                       callback_data: "download_resume",
                     },
                   ],
@@ -175,7 +184,7 @@ Explore my work, get in touch, or view my resume using the buttons below.
                   ],
                   [
                     {
-                      text: "📄 Download My Resume",
+                      text: "📄 Resumes",
                       callback_data: "download_resume",
                     },
                   ],
@@ -192,11 +201,17 @@ Explore my work, get in touch, or view my resume using the buttons below.
 
     /*
     =========================================================
-    WEBSITE STATUS
+    CALLBACK QUERIES
     =========================================================
     */
 
     const callbackQuery = update.callback_query;
+
+    /*
+    =========================================================
+    WEBSITE STATUS
+    =========================================================
+    */
 
     if (
       callbackQuery &&
@@ -211,10 +226,9 @@ Explore my work, get in touch, or view my resume using the buttons below.
         return NextResponse.json({ success: true });
       }
 
-      const language =
-        callbackQuery.data.endsWith("_ar")
-          ? "ar"
-          : "en";
+      const language = callbackQuery.data.endsWith("_ar")
+        ? "ar"
+        : "en";
 
       let statusData: {
         status?: string;
@@ -260,15 +274,17 @@ Explore my work, get in touch, or view my resume using the buttons below.
 ${overallIcon} حالة MERDO ZONE
 ━━━━━━━━━━━━━━━━━━━━
 
-🌐 الموقع       ${websiteIcon} ${
+🌐 الموقع           ${websiteIcon} ${
               websiteOnline ? "يعمل" : "متوقف"
             }
 
-🗄️ قاعدة البيانات ${databaseIcon} ${
+🗄️ قاعدة البيانات   ${databaseIcon} ${
               databaseOnline ? "تعمل" : "متوقفة"
             }
 
-⚡ زمن الاستجابة  ${statusData.responseTime ?? "-"}
+⚡ زمن الاستجابة    ${
+              statusData.responseTime ?? "-"
+            }
 
 ━━━━━━━━━━━━━━━━━━━━
 🕐 تم الفحص الآن
@@ -277,15 +293,17 @@ ${overallIcon} حالة MERDO ZONE
 ${overallIcon} MERDO ZONE STATUS
 ━━━━━━━━━━━━━━━━━━━━
 
-🌐 Website       ${websiteIcon} ${
+🌐 Website          ${websiteIcon} ${
               websiteOnline ? "Online" : "Offline"
             }
 
-🗄️ Database      ${databaseIcon} ${
+🗄️ Database         ${databaseIcon} ${
               databaseOnline ? "Online" : "Offline"
             }
 
-⚡ Response Time  ${statusData.responseTime ?? "-"}
+⚡ Response Time     ${
+              statusData.responseTime ?? "-"
+            }
 
 ━━━━━━━━━━━━━━━━━━━━
 🕐 Checked just now
@@ -316,12 +334,14 @@ ${overallIcon} MERDO ZONE STATUS
         },
       });
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({
+        success: true,
+      });
     }
 
     /*
     =========================================================
-    DOWNLOAD RESUME
+    RESUME LIST
     =========================================================
     */
 
@@ -332,7 +352,9 @@ ${overallIcon} MERDO ZONE STATUS
       const chatId = callbackQuery.message?.chat.id;
 
       if (!chatId) {
-        return NextResponse.json({ success: true });
+        return NextResponse.json({
+          success: true,
+        });
       }
 
       const language =
@@ -342,10 +364,10 @@ ${overallIcon} MERDO ZONE STATUS
           : "en";
 
       /*
-      Find the latest visible resume
+      Find ALL visible resumes
       */
 
-      const resume = await prisma.resume.findFirst({
+      const resumes = await prisma.resume.findMany({
         where: {
           isVisible: true,
         },
@@ -360,18 +382,171 @@ ${overallIcon} MERDO ZONE STATUS
 
       await telegramRequest("answerCallbackQuery", {
         callback_query_id: callbackQuery.id,
-        text: resume
-          ? language === "ar"
-            ? "📄 جاري تجهيز السيرة الذاتية..."
-            : "📄 Preparing your resume..."
-          : language === "ar"
-            ? "❌ السيرة الذاتية غير متاحة حاليًا."
-            : "❌ Resume is currently unavailable.",
       });
 
-      if (!resume) {
-        return NextResponse.json({ success: true });
+      /*
+      No resumes available
+      */
+
+      if (resumes.length === 0) {
+        await telegramRequest("sendMessage", {
+          chat_id: chatId,
+          text:
+            language === "ar"
+              ? "❌ لا توجد سيرة ذاتية متاحة حاليًا."
+              : "❌ No resumes are currently available.",
+        });
+
+        return NextResponse.json({
+          success: true,
+        });
       }
+
+      /*
+      Build resume selection buttons
+      */
+
+      const resumeButtons = resumes.map((resume) => [
+        {
+          text: `📄 ${resume.title}`,
+          callback_data: `resume_${resume.id}`,
+        },
+      ]);
+
+      /*
+      Add a back button
+      */
+
+      resumeButtons.push([
+        {
+          text:
+            language === "ar"
+              ? "↩️ العودة"
+              : "↩️ Back",
+          callback_data:
+            language === "ar"
+              ? "back_start_ar"
+              : "back_start_en",
+        },
+      ]);
+
+      const resumeListMessage =
+        language === "ar"
+          ? `━━━━━━━━━━━━━━━━━━━━
+📄 السير الذاتية
+━━━━━━━━━━━━━━━━━━━━
+
+اختر السيرة الذاتية التي تريد تحميلها:
+
+━━━━━━━━━━━━━━━━━━━━`
+          : `━━━━━━━━━━━━━━━━━━━━
+📄 RESUMES
+━━━━━━━━━━━━━━━━━━━━
+
+Choose the resume you would like to download:
+
+━━━━━━━━━━━━━━━━━━━━`;
+
+      await telegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: resumeListMessage,
+        reply_markup: {
+          inline_keyboard: resumeButtons,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+      });
+    }
+
+    /*
+    =========================================================
+    SELECTED RESUME
+    =========================================================
+    */
+
+    if (
+      callbackQuery &&
+      callbackQuery.data?.startsWith("resume_")
+    ) {
+      const chatId = callbackQuery.message?.chat.id;
+
+      if (!chatId) {
+        return NextResponse.json({
+          success: true,
+        });
+      }
+
+      const language =
+        callbackQuery.from?.language_code?.toLowerCase() ===
+        "ar"
+          ? "ar"
+          : "en";
+
+      /*
+      Extract Resume ID
+      */
+
+      const resumeIdText =
+        callbackQuery.data.replace("resume_", "");
+
+      const resumeId = Number(resumeIdText);
+
+      if (!Number.isInteger(resumeId)) {
+        await telegramRequest("answerCallbackQuery", {
+          callback_query_id: callbackQuery.id,
+          text:
+            language === "ar"
+              ? "❌ السيرة الذاتية غير صالحة."
+              : "❌ Invalid resume.",
+        });
+
+        return NextResponse.json({
+          success: true,
+        });
+      }
+
+      /*
+      Find selected visible resume
+      */
+
+      const resume = await prisma.resume.findFirst({
+        where: {
+          id: resumeId,
+          isVisible: true,
+        },
+      });
+
+      /*
+      Resume not found
+      */
+
+      if (!resume) {
+        await telegramRequest("answerCallbackQuery", {
+          callback_query_id: callbackQuery.id,
+          text:
+            language === "ar"
+              ? "❌ هذه السيرة الذاتية غير متاحة."
+              : "❌ This resume is no longer available.",
+        });
+
+        return NextResponse.json({
+          success: true,
+        });
+      }
+
+      /*
+      Tell Telegram that the button was received
+      */
+
+      await telegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text:
+          language === "ar"
+            ? "📄 جاري تجهيز السيرة الذاتية..."
+            : "📄 Preparing your resume...",
+      });
 
       /*
       Public endpoint that securely downloads
@@ -382,34 +557,186 @@ ${overallIcon} MERDO ZONE STATUS
         `${siteUrl}/api/resume/${resume.id}`;
 
       /*
-      Send the resume to the Telegram user
+      Send selected resume to Telegram
       */
 
-      const telegramResponse = await telegramRequest(
-        "sendDocument",
-        {
-          chat_id: chatId,
-          document: resumeUrl,
-          caption: `📄 ${resume.title}`,
-        }
-      );
+      const telegramResponse =
+        await telegramRequest(
+          "sendDocument",
+          {
+            chat_id: chatId,
+            document: resumeUrl,
+            caption: `📄 ${resume.title}`,
+          }
+        );
 
-      const telegramData = await telegramResponse.json();
+      const telegramData =
+        await telegramResponse.json();
 
       console.log(
         "Telegram resume response:",
         telegramData
       );
 
-      if (!telegramResponse.ok || !telegramData.ok) {
+      if (
+        !telegramResponse.ok ||
+        !telegramData.ok
+      ) {
         console.error(
           "Telegram resume error:",
           telegramData
         );
       }
+
+      return NextResponse.json({
+        success: true,
+      });
     }
 
-    return NextResponse.json({ success: true });
+    /*
+    =========================================================
+    BACK TO START
+    =========================================================
+    */
+
+    if (
+      callbackQuery &&
+      (callbackQuery.data === "back_start_ar" ||
+        callbackQuery.data === "back_start_en")
+    ) {
+      const chatId = callbackQuery.message?.chat.id;
+
+      if (!chatId) {
+        return NextResponse.json({
+          success: true,
+        });
+      }
+
+      const language =
+        callbackQuery.data.endsWith("_ar")
+          ? "ar"
+          : "en";
+
+      const startMessage =
+        language === "ar"
+          ? `━━━━━━━━━━━━━━━━━━━━
+👋 أهلاً بك في MERDO ZONE
+━━━━━━━━━━━━━━━━━━━━
+
+💻 Full-Stack Developer
+
+أبني الأنظمة والتطبيقات والتجارب الرقمية.
+
+استكشف أعمالي، تواصل معي، أو اطّلع على سيرتي الذاتية من خلال الأزرار بالأسفل.
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 Build • Create • Learn
+━━━━━━━━━━━━━━━━━━━━`
+          : `━━━━━━━━━━━━━━━━━━━━
+👋 WELCOME TO MERDO ZONE
+━━━━━━━━━━━━━━━━━━━━
+
+💻 Full-Stack Developer
+
+I build systems, applications, and digital experiences.
+
+Explore my work, get in touch, or view my resume using the buttons below.
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 Build • Create • Learn
+━━━━━━━━━━━━━━━━━━━━`;
+
+      const keyboard =
+        language === "ar"
+          ? {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🌐 استكشف موقعي",
+                    url: siteUrl,
+                  },
+                ],
+                [
+                  {
+                    text: "📊 حالة الموقع",
+                    callback_data:
+                      "website_status_ar",
+                  },
+                ],
+                [
+                  {
+                    text: "📩 تواصل معي",
+                    url: `${siteUrl}/contact`,
+                  },
+                ],
+                [
+                  {
+                    text: "📄 السير الذاتية",
+                    callback_data:
+                      "download_resume",
+                  },
+                ],
+              ],
+            }
+          : {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🌐 Explore My Website",
+                    url: siteUrl,
+                  },
+                ],
+                [
+                  {
+                    text: "📊 Website Status",
+                    callback_data:
+                      "website_status_en",
+                  },
+                ],
+                [
+                  {
+                    text: "📩 Contact Me",
+                    url: `${siteUrl}/contact`,
+                  },
+                ],
+                [
+                  {
+                    text: "📄 Resumes",
+                    callback_data:
+                      "download_resume",
+                  },
+                ],
+              ],
+            };
+
+      await telegramRequest(
+        "answerCallbackQuery",
+        {
+          callback_query_id:
+            callbackQuery.id,
+        }
+      );
+
+      await telegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: startMessage,
+        reply_markup: keyboard,
+      });
+
+      return NextResponse.json({
+        success: true,
+      });
+    }
+
+    /*
+    =========================================================
+    FINISH
+    =========================================================
+    */
+
+    return NextResponse.json({
+      success: true,
+    });
   } catch (error) {
     console.error(
       "Telegram webhook error:",
