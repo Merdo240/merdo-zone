@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+}
+
+model Profile {
+  id          Int      @id @default(autoincrement())
+  brandName   String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  translations ProfileTranslation[]
+}
+
+model ProfileTranslation {
+  id              Int      @id @default(autoincrement())
+  profileId       Int
+  languageCode    String   @db.VarChar(10)
+  jobTitle        String   @db.VarChar(100)
+  shortBio        String?  @db.Text
+  about           String?  @db.Text
+  heroTitle       String?  @db.VarChar(200)
+  heroDescription String?  @db.Text
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, languageCode])
+}
+
+model Project {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique @db.VarChar(150)
+  coverImageUrl   String?  @db.Text
+  coverImagePublicId String? @db.VarChar(255)
+  githubUrl       String?  @db.Text
+  liveDemoUrl     String?  @db.Text
+  isVisible       Boolean  @default(true)
+  displayOrder    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  translations    ProjectTranslation[]
+  images          ProjectImage[]
+  technologies    ProjectTechnology[]
+}
+
+model ProjectTranslation {
+  id              Int     @id @default(autoincrement())
+  projectId       Int
+  languageCode    String  @db.VarChar(10)
+  name            String  @db.VarChar(200)
+  shortDescription String? @db.Text
+  fullDescription  String? @db.Text
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, languageCode])
+}
+
+model ProjectImage {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  imageUrl    String   @db.Text
+  publicId    String?  @db.VarChar(255)
+  altText     String?  @db.VarChar(255)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model TechnologyCategory {
+  id           Int      @id @default(autoincrement())
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  translations TechnologyCategoryTranslation[]
+  technologies Technology[]
+}
+
+model TechnologyCategoryTranslation {
+  id          Int    @id @default(autoincrement())
+  categoryId  Int
+  languageCode String @db.VarChar(10)
+  name        String @db.VarChar(100)
+  description String? @db.Text
+
+  category TechnologyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, languageCode])
+}
+
+model Technology {
+  id              Int      @id @default(autoincrement())
+  categoryId      Int
+  icon            String?  @db.Text
+  experienceLevel Int      @default(1)
+  isVisible       Boolean  @default(true)
+  displayOrder    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category       TechnologyCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  translations   TechnologyTranslation[]
+  projects       ProjectTechnology[]
+
+  @@index([categoryId])
+}
+
+model TechnologyTranslation {
+  id           Int    @id @default(autoincrement())
+  technologyId Int
+  languageCode String @db.VarChar(10)
+  name         String @db.VarChar(100)
+  description  String? @db.Text
+
+  technology Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@unique([technologyId, languageCode])
+}
+
+model ProjectTechnology {
+  projectId    Int
+  technologyId Int
+  displayOrder Int @default(0)
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+  @@index([technologyId])
+}
+
+model Education {
+  id          Int      @id @default(autoincrement())
+  startDate   DateTime?
+  endDate     DateTime?
+  isCurrent   Boolean  @default(false)
+  isVisible   Boolean  @default(true)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  translations EducationTranslation[]
+}
+
+model EducationTranslation {
+  id           Int    @id @default(autoincrement())
+  educationId  Int
+  languageCode String @db.VarChar(10)
+  title        String @db.VarChar(200)
+  description  String? @db.Text
+
+  education Education @relation(fields: [educationId], references: [id], onDelete: Cascade)
+
+  @@unique([educationId, languageCode])
+}
+
+model Experience {
+  id           Int      @id @default(autoincrement())
+  startDate    DateTime?
+  endDate      DateTime?
+  isCurrent    Boolean  @default(false)
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  translations ExperienceTranslation[]
+}
+
+model ExperienceTranslation {
+  id           Int    @id @default(autoincrement())
+  experienceId Int
+  languageCode String @db.VarChar(10)
+  title        String @db.VarChar(200)
+  description  String? @db.Text
+
+  experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([experienceId, languageCode])
+}
+
+model SocialLink {
+  id           Int      @id @default(autoincrement())
+  platform     String   @db.VarChar(50)
+  url          String   @db.Text
+  icon         String?  @db.Text
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @db.VarChar(255)
+  subject   String?  @db.VarChar(200)
+  message   String   @db.Text
+  status    String   @default("NEW") @db.VarChar(20)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resume {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(150)
+  fileUrl     String   @db.Text
+  publicId    String?  @db.VarChar(255)
+  assetId     String?  @db.VarChar(255)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
