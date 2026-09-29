@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { prisma } from "@/src/lib/prisma";
 
 type TelegramUser = {
@@ -18,6 +19,7 @@ type TelegramMessage = {
 type TelegramCallbackQuery = {
   id: string;
   data?: string;
+  from?: TelegramUser;
   message?: {
     chat: TelegramChat;
   };
@@ -54,6 +56,28 @@ export async function POST(request: Request) {
 
     /*
     =========================================================
+    TELEGRAM HELPERS
+    =========================================================
+    */
+
+    async function telegramRequest(
+      method: string,
+      body: Record<string, unknown>
+    ) {
+      return fetch(
+        `https://api.telegram.org/bot${botToken}/${method}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+    }
+
+    /*
+    =========================================================
     /start
     =========================================================
     */
@@ -76,19 +100,27 @@ export async function POST(request: Request) {
 👋 أهلاً بك في MERDO ZONE
 ━━━━━━━━━━━━━━━━━━━━
 
-Full-Stack Developer
+💻 Full-Stack Developer
 
-استكشف موقعي، أعمالي، ومشاريعي الرقمية.
+أبني الأنظمة والتطبيقات والتجارب الرقمية.
 
+استكشف أعمالي، تواصل معي، أو اطّلع على سيرتي الذاتية من خلال الأزرار بالأسفل.
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 Build • Create • Learn
 ━━━━━━━━━━━━━━━━━━━━`
             : `━━━━━━━━━━━━━━━━━━━━
 👋 WELCOME TO MERDO ZONE
 ━━━━━━━━━━━━━━━━━━━━
 
-Full-Stack Developer
+💻 Full-Stack Developer
 
-Explore my website, work, and digital projects.
+I build systems, applications, and digital experiences.
 
+Explore my work, get in touch, or view my resume using the buttons below.
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 Build • Create • Learn
 ━━━━━━━━━━━━━━━━━━━━`;
 
         const keyboard =
@@ -99,6 +131,12 @@ Explore my website, work, and digital projects.
                     {
                       text: "🌐 استكشف موقعي",
                       url: siteUrl,
+                    },
+                  ],
+                  [
+                    {
+                      text: "📊 حالة الموقع",
+                      callback_data: "website_status_ar",
                     },
                   ],
                   [
@@ -125,6 +163,12 @@ Explore my website, work, and digital projects.
                   ],
                   [
                     {
+                      text: "📊 Website Status",
+                      callback_data: "website_status_en",
+                    },
+                  ],
+                  [
+                    {
                       text: "📩 Contact Me",
                       url: `${siteUrl}/contact`,
                     },
@@ -138,21 +182,141 @@ Explore my website, work, and digital projects.
                 ],
               };
 
-        await fetch(
-          `https://api.telegram.org/bot${botToken}/sendMessage`,
+        await telegramRequest("sendMessage", {
+          chat_id: chatId,
+          text: startMessage,
+          reply_markup: keyboard,
+        });
+      }
+    }
+
+    /*
+    =========================================================
+    WEBSITE STATUS
+    =========================================================
+    */
+
+    const callbackQuery = update.callback_query;
+
+    if (
+      callbackQuery &&
+      (callbackQuery.data === "website_status_ar" ||
+        callbackQuery.data === "website_status_en" ||
+        callbackQuery.data === "refresh_status_ar" ||
+        callbackQuery.data === "refresh_status_en")
+    ) {
+      const chatId = callbackQuery.message?.chat.id;
+
+      if (!chatId) {
+        return NextResponse.json({ success: true });
+      }
+
+      const language =
+        callbackQuery.data.endsWith("_ar")
+          ? "ar"
+          : "en";
+
+      let statusData: {
+        status?: string;
+        website?: string;
+        database?: string;
+        responseTime?: string;
+      } = {};
+
+      try {
+        const statusResponse = await fetch(
+          `${siteUrl}/api/status`,
           {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: startMessage,
-              reply_markup: keyboard,
-            }),
+            cache: "no-store",
           }
         );
+
+        statusData = await statusResponse.json();
+      } catch {
+        statusData = {
+          status: "offline",
+          website: "offline",
+          database: "offline",
+          responseTime: "-",
+        };
       }
+
+      const websiteOnline =
+        statusData.website === "online";
+
+      const databaseOnline =
+        statusData.database === "online";
+
+      const overallOnline =
+        statusData.status === "online";
+
+      const websiteIcon = websiteOnline ? "🟢" : "🔴";
+      const databaseIcon = databaseOnline ? "🟢" : "🔴";
+      const overallIcon = overallOnline ? "🟢" : "🟡";
+
+      const statusMessage =
+        language === "ar"
+          ? `━━━━━━━━━━━━━━━━━━━━
+${overallIcon} حالة MERDO ZONE
+━━━━━━━━━━━━━━━━━━━━
+
+🌐 الموقع       ${websiteIcon} ${
+              websiteOnline ? "يعمل" : "متوقف"
+            }
+
+🗄️ قاعدة البيانات ${databaseIcon} ${
+              databaseOnline ? "تعمل" : "متوقفة"
+            }
+
+⚡ زمن الاستجابة  ${statusData.responseTime ?? "-"}
+
+━━━━━━━━━━━━━━━━━━━━
+🕐 تم الفحص الآن
+━━━━━━━━━━━━━━━━━━━━`
+          : `━━━━━━━━━━━━━━━━━━━━
+${overallIcon} MERDO ZONE STATUS
+━━━━━━━━━━━━━━━━━━━━
+
+🌐 Website       ${websiteIcon} ${
+              websiteOnline ? "Online" : "Offline"
+            }
+
+🗄️ Database      ${databaseIcon} ${
+              databaseOnline ? "Online" : "Offline"
+            }
+
+⚡ Response Time  ${statusData.responseTime ?? "-"}
+
+━━━━━━━━━━━━━━━━━━━━
+🕐 Checked just now
+━━━━━━━━━━━━━━━━━━━━`;
+
+      await telegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+      });
+
+      await telegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: statusMessage,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text:
+                  language === "ar"
+                    ? "🔄 تحديث الحالة"
+                    : "🔄 Refresh Status",
+                callback_data:
+                  language === "ar"
+                    ? "refresh_status_ar"
+                    : "refresh_status_en",
+              },
+            ],
+          ],
+        },
+      });
+
+      return NextResponse.json({ success: true });
     }
 
     /*
@@ -160,8 +324,6 @@ Explore my website, work, and digital projects.
     DOWNLOAD RESUME
     =========================================================
     */
-
-    const callbackQuery = update.callback_query;
 
     if (
       callbackQuery &&
@@ -172,6 +334,12 @@ Explore my website, work, and digital projects.
       if (!chatId) {
         return NextResponse.json({ success: true });
       }
+
+      const language =
+        callbackQuery.from?.language_code?.toLowerCase() ===
+        "ar"
+          ? "ar"
+          : "en";
 
       /*
       Find the latest visible resume
@@ -190,21 +358,16 @@ Explore my website, work, and digital projects.
       Tell Telegram that the button was received
       */
 
-      await fetch(
-        `https://api.telegram.org/bot${botToken}/answerCallbackQuery`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            callback_query_id: callbackQuery.id,
-            text: resume
-              ? "📄 Preparing your resume..."
-              : "❌ Resume is currently unavailable.",
-          }),
-        }
-      );
+      await telegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: resume
+          ? language === "ar"
+            ? "📄 جاري تجهيز السيرة الذاتية..."
+            : "📄 Preparing your resume..."
+          : language === "ar"
+            ? "❌ السيرة الذاتية غير متاحة حاليًا."
+            : "❌ Resume is currently unavailable.",
+      });
 
       if (!resume) {
         return NextResponse.json({ success: true });
@@ -222,18 +385,12 @@ Explore my website, work, and digital projects.
       Send the resume to the Telegram user
       */
 
-      const telegramResponse = await fetch(
-        `https://api.telegram.org/bot${botToken}/sendDocument`,
+      const telegramResponse = await telegramRequest(
+        "sendDocument",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            document: resumeUrl,
-            caption: `📄 ${resume.title}`,
-          }),
+          chat_id: chatId,
+          document: resumeUrl,
+          caption: `📄 ${resume.title}`,
         }
       );
 
