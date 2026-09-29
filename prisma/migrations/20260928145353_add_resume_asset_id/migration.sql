@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `resume` ADD COLUMN `assetId` VARCHAR(255) NULL;
+ALTER TABLE `Resume` ADD COLUMN `assetId` VARCHAR(255) NULL;
