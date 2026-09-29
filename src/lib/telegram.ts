@@ -4,7 +4,7 @@ export async function sendTelegramMessage(
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    process.env.SITE_URL?.replace(/\/$/, "");
 
   if (!botToken || !chatId) {
     throw new Error("Telegram environment variables are missing");

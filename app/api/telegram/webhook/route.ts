@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const update: TelegramUpdate = await request.json();
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    const siteUrl = process.env.SITE_URL?.replace(/\/$/, "");
 
     if (!botToken || !siteUrl) {
       throw new Error("Telegram environment variables are missing");
