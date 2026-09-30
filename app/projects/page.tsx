@@ -1,6 +1,41 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { prisma } from "@/src/lib/prisma";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+
+  const language =
+    cookieStore.get("language")?.value === "ar" ? "ar" : "en";
+
+  const isArabic = language === "ar";
+
+  return {
+    title: isArabic ? "المشاريع" : "Projects",
+
+    description: isArabic
+      ? "استكشف مجموعة من المشاريع والتطبيقات البرمجية التي بنيتها خلال رحلتي في تطوير البرمجيات."
+      : "Explore a collection of web projects and software applications built throughout my development journey.",
+
+    alternates: {
+      canonical: "/projects",
+    },
+
+    openGraph: {
+      title: isArabic
+        ? "المشاريع | Merdo Zone"
+        : "Projects | Merdo Zone",
+
+      description: isArabic
+        ? "استكشف مجموعة من المشاريع والتطبيقات البرمجية التي بنيتها خلال رحلتي في تطوير البرمجيات."
+        : "Explore a collection of web projects and software applications built throughout my development journey.",
+
+      url: "/projects",
+      type: "website",
+    },
+  };
+}
 
 export default async function ProjectsPage() {
   const cookieStore = await cookies();

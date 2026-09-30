@@ -1,6 +1,59 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { prisma } from "@/src/lib/prisma";
 import ContactForm from "./ContactForm";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+
+  const language =
+    cookieStore.get("language")?.value === "ar" ? "ar" : "en";
+
+  const isArabic = language === "ar";
+
+  return {
+    title: isArabic ? "تواصل معي" : "Contact Me",
+
+    description: isArabic
+      ? "تواصل مع Merdo Zone عبر البريد الإلكتروني ووسائل التواصل المختلفة."
+      : "Get in touch with Merdo Zone through email and social media.",
+
+    alternates: {
+      canonical: "/contact",
+    },
+
+    openGraph: {
+      type: "website",
+      url: "/contact",
+      title: isArabic
+        ? "تواصل معي | Merdo Zone"
+        : "Contact Me | Merdo Zone",
+      description: isArabic
+        ? "تواصل مع Merdo Zone عبر البريد الإلكتروني ووسائل التواصل المختلفة."
+        : "Get in touch with Merdo Zone through email and social media.",
+      siteName: "Merdo Zone",
+      images: [
+        {
+          url: "/images/og-image.jpeg",
+          width: 1000,
+          height: 562,
+          alt: "Merdo Zone - Full-Stack Developer",
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: isArabic
+        ? "تواصل معي | Merdo Zone"
+        : "Contact Me | Merdo Zone",
+      description: isArabic
+        ? "تواصل مع Merdo Zone عبر البريد الإلكتروني ووسائل التواصل المختلفة."
+        : "Get in touch with Merdo Zone through email and social media.",
+      images: ["/images/og-image.jpeg"],
+    },
+  };
+}
 
 export default async function ContactPage() {
   const cookieStore = await cookies();

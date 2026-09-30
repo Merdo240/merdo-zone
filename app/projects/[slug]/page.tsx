@@ -1,7 +1,95 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/src/lib/prisma";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  const cookieStore = await cookies();
+
+  const language =
+    cookieStore.get("language")?.value === "ar" ? "ar" : "en";
+
+  const project = await prisma.project.findUnique({
+    where: {
+      slug,
+    },
+    include: {
+      translations: true,
+    },
+  });
+
+  if (!project || !project.isVisible) {
+    return {
+      title: "Project Not Found",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  function getTranslation<T extends { languageCode: string }>(
+    translations: T[]
+  ) {
+    return (
+      translations.find((item) => item.languageCode === language) ??
+      translations.find((item) => item.languageCode === "en") ??
+      translations[0]
+    );
+  }
+
+  const translation = getTranslation(project.translations);
+
+  const name = translation?.name ?? project.slug;
+
+  const description =
+    translation?.shortDescription ??
+    (language === "ar"
+      ? `استكشف مشروع ${name} من Merdo Zone.`
+      : `Explore ${name}, a software development project by Merdo Zone.`);
+
+  const image = project.coverImageUrl
+    ? [
+        {
+          url: project.coverImageUrl,
+          alt: name,
+        },
+      ]
+    : ["/images/og-image.jpeg"];
+
+  return {
+    title: name,
+
+    description,
+
+    alternates: {
+      canonical: `/projects/${project.slug}`,
+    },
+
+    openGraph: {
+      type: "article",
+      url: `/projects/${project.slug}`,
+      title: `${name} | Merdo Zone`,
+      description,
+      siteName: "Merdo Zone",
+      images: image,
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} | Merdo Zone`,
+      description,
+      images: image,
+    },
+  };
+}
 
 export default async function ProjectDetailsPage({
   params,
@@ -59,8 +147,32 @@ export default async function ProjectDetailsPage({
 
   const isArabic = language === "ar";
 
+  const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CreativeWork",
+  name: translation?.name ?? project.slug,
+  description:
+    translation?.shortDescription ??
+    `Explore ${translation?.name ?? project.slug}, a software development project by Merdo Zone.`,
+  url: `https://merdo-zone.vercel.app/projects/${project.slug}`,
+  image: project.coverImageUrl
+    ? [project.coverImageUrl]
+    : ["https://merdo-zone.vercel.app/images/og-image.jpeg"],
+  creator: {
+    "@type": "Person",
+    name: "Merdo Zone",
+    url: "https://merdo-zone.vercel.app",
+  },
+};
+
   return (
     <main className="min-h-screen bg-[#010000] px-6 pb-24 pt-32">
+      <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(jsonLd),
+  }}
+/>
       <div className="mx-auto w-full max-w-6xl">
 
         {/* Back */}

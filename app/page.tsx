@@ -1,6 +1,83 @@
+import type { Metadata } from "next";
 import { prisma } from "@/src/lib/prisma";
 import ContactForm from "@/app/components/ContactForm";
 import { cookies } from "next/headers";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await prisma.profile.findFirst({
+    include: {
+      translations: true,
+    },
+  });
+
+  const translation =
+    profile?.translations.find(
+      (item) => item.languageCode === "en"
+    ) ?? profile?.translations[0];
+
+  const title =
+    translation?.jobTitle
+      ? `${profile?.brandName ?? "Merdo Zone"} | ${translation.jobTitle}`
+      : "Merdo Zone | Full-Stack Developer";
+
+  const description =
+    translation?.heroDescription ??
+    translation?.shortBio ??
+    "Merdo Zone is the personal portfolio of a Full-Stack Developer, showcasing projects, technologies, and software development work.";
+
+  return {
+    title,
+
+    description,
+
+    alternates: {
+      canonical: "/",
+    },
+
+    openGraph: {
+      type: "website",
+      url: "/",
+      title,
+      description,
+      siteName: profile?.brandName ?? "Merdo Zone",
+      images: [
+        {
+          url: "/images/og-image.jpeg",
+          width: 1000,
+          height: 562,
+          alt: "Merdo Zone - Full-Stack Developer",
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/images/og-image.jpeg"],
+    },
+  };
+}
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Merdo Zone",
+    url: "https://merdo-zone.vercel.app",
+    jobTitle: "Full-Stack Developer",
+    description:
+      "Full-Stack Developer portfolio showcasing projects, technologies, and software development work.",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Merdo Zone",
+    url: "https://merdo-zone.vercel.app",
+    description:
+      "Merdo Zone is the personal portfolio of a Full-Stack Developer, showcasing projects, technologies, and software development work.",
+  },
+];
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -126,6 +203,12 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#010000] text-white">
+      <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(jsonLd),
+  }}
+/>
       {/* Hero */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
         <div
