@@ -201,6 +201,31 @@ export const metadata: Metadata = {
     follow: true,
   },
 
+  openGraph: {
+  type: "website",
+  url: "https://merdo-zone.vercel.app",
+  title: "Merdo Zone | Full-Stack Developer",
+  description:
+    "Merdo Zone is the personal portfolio of a Full-Stack Developer, showcasing projects, technologies, and software development work.",
+  siteName: "Merdo Zone",
+  images: [
+    {
+      url: "/images/og-image.jpeg",
+      width: 1000,
+      height: 562,
+      alt: "Merdo Zone - Full-Stack Developer",
+    },
+  ],
+},
+
+twitter: {
+  card: "summary_large_image",
+  title: "Merdo Zone | Full-Stack Developer",
+  description:
+    "Full-Stack Developer portfolio showcasing projects, technologies, and software development work.",
+  images: ["/images/og-image.jpeg"],
+},
+
   verification: {
     google: "a1hN24MNg7QLxPyGfKsOK1mMQkBI6KLwV_NfRJ03i6I",
   },
