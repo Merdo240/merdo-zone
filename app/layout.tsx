@@ -6,6 +6,9 @@ import Navbar from "./components/Navbar";
 export const metadata: Metadata = {
   title: "Merdo Zone",
   description: "Full-Stack Developer",
+  verification: {
+  google: "a1hN24MNg7QLxPyGfKsOK1mMQkBI6KLwV_NfRJ03i6I",
+},
 };
 
 export default function RootLayout({
