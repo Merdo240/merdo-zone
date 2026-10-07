@@ -853,48 +853,180 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Contact */}
-      <section className="border-t border-white/10 px-6 py-24">
-        <div className="mx-auto grid w-full max-w-5xl gap-12 md:grid-cols-2">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#009F94]">
-              {language === "ar" ? "تواصل" : "Contact"}
-            </p>
+     {/* Contact */}
+<section className="relative overflow-hidden border-t border-white/10 px-6 py-28">
+  {/* Background Glow */}
+  <div
+    aria-hidden="true"
+    className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#009F94]/[0.06] blur-[120px]"
+  />
 
-            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
+  <div
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 opacity-[0.025]"
+    style={{
+      backgroundImage:
+        "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+      backgroundSize: "48px 48px",
+    }}
+  />
+
+  <div className="relative mx-auto w-full max-w-5xl">
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025]">
+      <div className="grid md:grid-cols-[1.2fr_0.8fr]">
+        {/* Main CTA */}
+        <div className="p-8 sm:p-10 md:p-14">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-[#009F94]" />
+
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#009F94]">
               {language === "ar"
-                ? "لنتواصل معًا"
-                : "Let's Connect"}
-            </h2>
-
-            <p className="mt-5 max-w-xl text-base leading-8 text-white/50">
-              {language === "ar"
-                ? "لديك فكرة مشروع أو سؤال أو ترغب فقط في التواصل؟ يمكنك استخدام نموذج التواصل أو أي من منصاتي الاجتماعية."
-                : "Have a project idea, question, or just want to get in touch? Feel free to reach out through the contact form or any of my social platforms."}
+                ? "ابدأ مشروعك"
+                : "START A PROJECT"}
             </p>
-
-            {socialLinks.length > 0 && (
-              <div className="mt-8 flex flex-wrap gap-3">
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/70 transition hover:border-[#009F94]/40 hover:bg-[#009F94]/10 hover:text-[#009F94]"
-                  >
-                    {link.platform}
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
-            <ContactForm />
+          <h2 className="mt-5 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
+            {language === "ar" ? (
+              <>
+                لديك فكرة؟
+                <br />
+                <span className="text-[#009F94]">
+                  لنبنِها معًا.
+                </span>
+              </>
+            ) : (
+              <>
+                Have an idea?
+                <br />
+                <span className="text-[#009F94]">
+                  Let&apos;s build it.
+                </span>
+              </>
+            )}
+          </h2>
+
+          <p className="mt-6 max-w-xl text-sm leading-7 text-white/45 sm:text-base">
+            {language === "ar"
+              ? "أخبرني عن مشروعك واحتياجاتك، وسنتحدث عن أفضل طريقة لتحويل فكرتك إلى منتج رقمي متكامل."
+              : "Tell me about your project and requirements, and let’s discuss the best way to turn your idea into a complete digital product."}
+          </p>
+
+          <div className="mt-8">
+            <a
+              href="/contact"
+              className="group inline-flex items-center gap-3 rounded-xl bg-[#009F94] px-5 py-3 text-sm font-semibold text-black transition-all duration-200 hover:bg-[#00b8aa] hover:shadow-lg hover:shadow-[#009F94]/10"
+            >
+              <span>
+                {language === "ar"
+                  ? "ابدأ محادثة"
+                  : "Start a Conversation"}
+              </span>
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  language === "ar"
+                    ? "rotate-180 group-hover:-translate-x-1"
+                    : "group-hover:translate-x-1"
+                }`}
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 12h14M13 6l6 6-6 6"
+                />
+              </svg>
+            </a>
           </div>
         </div>
-      </section>
+
+        {/* Contact Details */}
+        <div className="border-t border-white/10 bg-black/20 p-8 sm:p-10 md:border-l md:border-t-0 md:p-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">
+            {language === "ar"
+              ? "طرق التواصل"
+              : "CONNECT"}
+          </p>
+
+          {socialLinks.length > 0 && (
+            <div className="mt-6 space-y-2">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 transition-all duration-200 hover:border-[#009F94]/30 hover:bg-[#009F94]/[0.05]"
+                >
+                  <div className="flex items-center gap-3">
+                    {link.icon && (
+                      <span className="text-sm text-white/40 transition-colors group-hover:text-[#009F94]">
+                        {link.icon}
+                      </span>
+                    )}
+
+                    <span className="text-sm text-white/60 transition-colors group-hover:text-white">
+                      {link.platform}
+                    </span>
+                  </div>
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className={`h-4 w-4 text-white/20 transition-all group-hover:text-[#009F94] ${
+                      language === "ar"
+                        ? "rotate-180 group-hover:-translate-x-0.5"
+                        : "group-hover:translate-x-0.5"
+                    }`}
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 12h14M13 6l6 6-6 6"
+                    />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-8 border-t border-white/[0.07] pt-6">
+            <p className="text-xs leading-6 text-white/30">
+              {language === "ar"
+                ? "أرسل تفاصيل مشروعك من صفحة التواصل للحصول على بداية واضحة للمناقشة."
+                : "Send your project details through the contact page to start the conversation with a clear direction."}
+            </p>
+
+            <a
+              href="/contact"
+              className="mt-4 inline-flex items-center text-sm font-medium text-[#009F94] transition-colors hover:text-[#00cfc0]"
+            >
+              {language === "ar"
+                ? "صفحة التواصل"
+                : "Contact Page"}
+
+              <span
+                className={`mx-2 transition-transform ${
+                  language === "ar"
+                    ? "rotate-180"
+                    : ""
+                }`}
+              >
+                →
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 {/* Footer */}
 <footer className="border-t border-white/10 bg-white/[0.015] px-6">

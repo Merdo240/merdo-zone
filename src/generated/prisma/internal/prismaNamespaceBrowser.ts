@@ -288,6 +288,9 @@ export const ContactMessageScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  phone: 'phone',
+  service: 'service',
+  budget: 'budget',
   subject: 'subject',
   message: 'message',
   status: 'status',
@@ -440,6 +443,9 @@ export type SocialLinkOrderByRelevanceFieldEnum = (typeof SocialLinkOrderByRelev
 export const ContactMessageOrderByRelevanceFieldEnum = {
   name: 'name',
   email: 'email',
+  phone: 'phone',
+  service: 'service',
+  budget: 'budget',
   subject: 'subject',
   message: 'message',
   status: 'status'

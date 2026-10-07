@@ -32,6 +32,9 @@ export async function POST(request: Request) {
     const {
       name,
       email,
+      phone,
+      service,
+      budget,
       subject,
       message,
     } = body;
@@ -56,6 +59,26 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!service?.trim()) {
+      return Response.json(
+        {
+          success: false,
+          message: "Service is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!subject?.trim()) {
+      return Response.json(
+        {
+          success: false,
+          message: "Subject is required",
+        },
+        { status: 400 }
+      );
+    }
+
     if (!message?.trim()) {
       return Response.json(
         {
@@ -71,7 +94,10 @@ export async function POST(request: Request) {
         data: {
           name: name.trim(),
           email: email.trim(),
-          subject: subject?.trim() || null,
+          phone: phone?.trim() || null,
+          service: service.trim(),
+          budget: budget?.trim() || null,
+          subject: subject.trim(),
           message: message.trim(),
         },
       });
@@ -80,7 +106,9 @@ export async function POST(request: Request) {
       {
         success: true,
         message: "Message sent successfully",
-        contactMessage,
+        contactMessage: {
+          id: contactMessage.id,
+        },
       },
       { status: 201 }
     );
