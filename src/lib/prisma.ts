@@ -11,11 +11,14 @@ const url = new URL(databaseUrl);
 
 const adapter = new PrismaMariaDb({
   host: url.hostname,
-  port: Number(url.port),
+  port: Number(url.port) || 4000,
   user: decodeURIComponent(url.username),
   password: decodeURIComponent(url.password),
   database: url.pathname.replace("/", ""),
   connectionLimit: 5,
+  ssl: {
+    rejectUnauthorized: true,
+  },
 });
 
 const globalForPrisma = globalThis as unknown as {
